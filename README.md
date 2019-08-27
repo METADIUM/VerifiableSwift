@@ -22,7 +22,7 @@ pod 'VerifiableSwift'
 
 ## Author
 
-jp.jongeun.park@gmail.com, mansud0206@gmail.com
+ybjeon@coinplug.com
 
 ## License
 
