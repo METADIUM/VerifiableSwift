@@ -1,6 +1,6 @@
 # VerifiableSwift
 
-[![CI Status](https://img.shields.io/travis/jp.jongeun.park@gmail.com/VerifiableSwift.svg?style=flat)](https://travis-ci.org/jp.jongeun.park@gmail.com/VerifiableSwift)
+[![CI Status](https://img.shields.io/travis/METADIUM/VerifiableSwift.svg?style=flat)](https://travis-ci.org/METADIUM/VerifiableSwift)
 [![Version](https://img.shields.io/cocoapods/v/VerifiableSwift.svg?style=flat)](https://cocoapods.org/pods/VerifiableSwift)
 [![License](https://img.shields.io/cocoapods/l/VerifiableSwift.svg?style=flat)](https://cocoapods.org/pods/VerifiableSwift)
 [![Platform](https://img.shields.io/cocoapods/p/VerifiableSwift.svg?style=flat)](https://cocoapods.org/pods/VerifiableSwift)
