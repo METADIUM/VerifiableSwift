@@ -1,4 +1,6 @@
 use_frameworks!
+pod 'JWTsSwift'
+
 target 'VerifiableSwift_Tests' do
   pod 'VerifiableSwift', :path => '../'
   
