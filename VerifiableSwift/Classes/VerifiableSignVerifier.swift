@@ -10,6 +10,7 @@ import Foundation
 import JWTsSwift
 
 /// Sign and verify Verifiable(Credential/Presentation)
+@available(*, deprecated, message:"use Verifiable, VerifiableCredential, VerifiablePresentation instead")
 public class VerifiableSignVerifier {
     
     public init() {

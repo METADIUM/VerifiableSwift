@@ -7,16 +7,18 @@
 //
 
 import Foundation
-
+import JWTsSwift
 
 /// Verifiable Presentation
-public class VerifiablePresentation : Verifiable {
+public class VerifiablePresentation : Verifiable, VerifiableDelegator {
+    
     
     /// init
     ///
     /// - Throws: VerifiableError.NullType
     public override init() throws {
         try super.init()
+        super.delegator = self
     }
     
     
@@ -26,6 +28,7 @@ public class VerifiablePresentation : Verifiable {
     /// - Throws: VerifiableError.NullType
     public override init(json: String) throws {
         try super.init(json: json)
+        super.delegator = self
     }
     
     /// init with json dictionary
@@ -33,6 +36,31 @@ public class VerifiablePresentation : Verifiable {
     /// - Parameter jsonObject: json dictionary
     public override init(jsonObject: [String: Any]) {
         super.init(jsonObject: jsonObject)
+        super.delegator = self
+    }
+    
+    
+    /// Init with JWS object
+    /// - Parameter jws: JWS object of presentation
+    /// - Throws: VerifiableError.InvalidPresentation
+    public convenience init(jws: JWSObject) throws {
+        try self.init()
+        
+        let jwt = try JWT.init(jsonData: jws.payload)
+        let id = jwt.jwtID
+        let holder = jwt.issuer
+        guard let vpClaims: [String: Any] = jwt.claims["vp"] as? [String: Any] else {
+            throw VerifiableError.InvalidPresentation
+        }
+        
+        self.jsonObject = vpClaims
+        
+        if id != nil {
+            self.id = id
+        }
+        if holder != nil {
+            self.holder = holder?.absoluteString
+        }
     }
     
     /// Get Type. fixed "VerifiablePresentation"
@@ -78,4 +106,36 @@ public class VerifiablePresentation : Verifiable {
             return jsonObject["holder"] as? String
         }
     }
+    
+    
+    /// Presentation to JWT
+    /// - Parameters:
+    ///   - nonce: nonce
+    ///   - claims: base claims
+    /// - Throws:
+    /// - Returns: JWT to formatting
+    func toJWT(nonce: String?, claims: JWT?) throws -> JWT {
+        let tmpData = try NSKeyedArchiver.archivedData(withRootObject: jsonObject, requiringSecureCoding: true)
+        var copiedDict = NSKeyedUnarchiver.unarchiveObject(with: tmpData) as! [String: Any]
+        
+        let jti = id
+        let holder = holder
+        
+        let jwt = claims == nil ? JWT.init() : claims!
+        if jti != nil {
+            copiedDict.removeValue(forKey: "id")
+            jwt.jwtID = jti!
+        }
+        if holder != nil {
+            copiedDict.removeValue(forKey: "holder")
+            jwt.issuer = URL.init(string: holder!)
+        }
+        if nonce != nil {
+            jwt.claims["nonce"] = nonce
+        }
+        jwt.claims["vp"] = copiedDict
+        
+        return jwt
+    }
+
 }

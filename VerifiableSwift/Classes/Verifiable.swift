@@ -7,13 +7,24 @@
 //
 
 import Foundation
+import JWTsSwift
 
+
+/// JWT 로 변환할 delegator
+protocol VerifiableDelegator {
+    func toJWT(nonce: String?, claims: JWT?) throws -> JWT
+}
 
 /// Verifiable error
 ///
 /// - NullType: type is null. Need override func getType()
+/// - InvalidCredential: invalid credentail
+/// - InvalidCredential: invalid presentation
 enum VerifiableError: Error {
     case NullType
+    case InvalidCredential
+    case InvalidPresentation
+    case Unknown
 }
 
 
@@ -22,6 +33,8 @@ public class Verifiable {
     
     /// verifiable data
     var jsonObject: [String: Any]
+    
+    var delegator: VerifiableDelegator?
     
     
     /// init
@@ -135,4 +148,54 @@ public class Verifiable {
     public func getJson() -> [String: Any] {
         return jsonObject
     }
+    
+    
+    /// Sign credential or presentation
+    /// - Parameters:
+    ///   - algorithm: signature algorithm
+    ///   - kid: key id
+    ///   - nonce: nonce
+    ///   - signer: JWS signer
+    ///   - baseClaims: base JWT claims. presentation 에 issuanceDate, expirationDate 추가사 사용
+    /// - Throws: error to sign
+    /// - Returns: signed jws
+    public func sign(algorithm: SignatureAlgorithm, kid: String, nonce: String?, signer: JWSSigner, baseClaims: JWT?) throws -> JWSObject {
+        // To JWT
+        guard let jsonData = try delegator?.toJWT(nonce: nonce, claims: baseClaims).data() else {
+            throw VerifiableError.Unknown
+        }
+
+        // Sign JWT
+        let header: JWSHeader = JWSHeader.init(algorithm: algorithm)
+        header.kid = kid
+        let jws:JWSObject = JWSObject.init(header: header, payload: jsonData)
+        try jws.sign(signer: signer)
+        
+        return jws
+    }
+    
+    
+    /// Sign credential or presentation. algorithm is ES256K
+    /// - Parameters:
+    ///   - kid: key id
+    ///   - nonce: nonce
+    ///   - signer: JWS signer
+    ///   - baseClaims: base JWT claims. presentation 에 issuanceDate, expirationDate 추가사 사용
+    /// - Throws: error to sign
+    /// - Returns: signed jws
+    public func sign(kid: String, nonce: String?, signer: JWSSigner, baseClaims: JWT?) throws -> JWSObject {
+        return try sign(algorithm: .ES256K, kid: kid, nonce: nonce, signer: signer, baseClaims: baseClaims)
+    }
+
+    /// Sign credential or presentation. . algorithm is ES256K
+    /// - Parameters:
+    ///   - kid: key id
+    ///   - nonce: nonce
+    ///   - signer: JWS signer
+    /// - Throws: error to sign
+    /// - Returns: signed jws
+    public func sign(kid: String, nonce: String?, signer: JWSSigner) throws -> JWSObject {
+        return try sign(kid: kid, nonce: nonce, signer: signer, baseClaims: nil)
+    }
+
 }

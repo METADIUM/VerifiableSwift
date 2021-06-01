@@ -7,17 +7,16 @@
 //
 
 import Foundation
-
+import JWTsSwift
 
 /// VerifiableCredential
-public class VerifiableCredential : Verifiable {
-    
-    
+public class VerifiableCredential : Verifiable, VerifiableDelegator {
     /// init
     ///
     /// - Throws: VerifiableError.NullType
     public override init() throws {
         try super.init()
+        super.delegator = self
     }
     
     
@@ -27,6 +26,7 @@ public class VerifiableCredential : Verifiable {
     /// - Throws: VerifiableError.NullType
     public override init(json: String) throws {
         try super.init(json: json)
+        super.delegator = self
     }
     
     
@@ -35,8 +35,47 @@ public class VerifiableCredential : Verifiable {
     /// - Parameter jsonObject: json dictionary
     public override init(jsonObject: [String: Any]) {
         super.init(jsonObject: jsonObject)
+        super.delegator = self
     }
     
+    
+    /// Init with JWSObject
+    /// - Parameter jws: jws object of credentail
+    /// - Throws: VerifiableError.InvalidCredential
+    public convenience init(jws: JWSObject) throws {
+        try self.init()
+        
+        let jwt = try JWT.init(jsonData: jws.payload)
+        let id = jwt.jwtID
+        let expireDate = jwt.expirationTime
+        let issuer = jwt.issuer
+        let issuedTime = jwt.notBeforeTime
+        let subject = jwt.subject
+        guard let vcClaims: [String: Any] = jwt.claims["vc"] as? [String: Any] else {
+            throw VerifiableError.InvalidCredential
+        }
+        
+        self.jsonObject = vcClaims
+        if id != nil {
+            self.id = id
+        }
+        if expireDate != nil {
+            self.expirationDate = expireDate
+        }
+        if issuer != nil {
+            self.issuer = issuer?.absoluteString
+        }
+        if issuedTime != nil {
+            self.issuanceDate = issuedTime
+        }
+        if subject != nil {
+            if self.credentialSubject != nil && self.credentialSubject is [String: Any] {
+                var credentialSubject = self.credentialSubject as? [String: Any]
+                credentialSubject?["id"] = subject
+                self.credentialSubject = credentialSubject
+            }
+        }
+    }
     
     /// Get Type. fixed "VerifiableCredential"
     ///
@@ -101,6 +140,9 @@ public class VerifiableCredential : Verifiable {
         }
     }
     
+    public func getCredentialSubject<T>() -> T? {
+        return credentialSubject as? T
+    }
     
     /// set credentialStatus
     ///
@@ -153,4 +195,62 @@ public class VerifiableCredential : Verifiable {
             return nil;
         }
     }
+    
+    
+    /// VerifiableCredential to JWT
+    /// - Parameters:
+    ///   - nonce: nonce
+    ///   - claims: base JWT claims.
+    /// - Throws:
+    /// - Returns: JWT to formatting
+    func toJWT(nonce: String?, claims: JWT?) throws -> JWT {
+        let tmpData = try NSKeyedArchiver.archivedData(withRootObject: jsonObject, requiringSecureCoding: false)
+        var copiedDict = NSKeyedUnarchiver.unarchiveObject(with: tmpData) as! [String: Any]
+        
+        let jti: String? = id
+        let expireDate: Date? = expirationDate
+        let issuer = issuer
+        let issuedDate = issuanceDate
+        let credentialSubject = credentialSubject
+        var subject: String? = nil
+        if credentialSubject is [String: Any] {
+            let id = (credentialSubject as! [String: Any])["id"] as? String
+            if id != nil {
+                subject = id
+                var tmp: [String: Any] = copiedDict["credentialSubject"] as! [String: Any]
+                tmp.removeValue(forKey: "id")
+                copiedDict["credentialSubject"] = tmp
+            }
+        }
+        
+        let jwt = claims == nil ? JWT.init() : claims!
+        
+        if jti != nil {
+            copiedDict.removeValue(forKey: "id")
+            jwt.jwtID = jti!
+        }
+        if expireDate != nil {
+            copiedDict.removeValue(forKey: "expirationDate")
+            jwt.expirationTime = expireDate!
+        }
+        if issuer != nil {
+            copiedDict.removeValue(forKey: "issuer")
+            jwt.issuer = URL.init(string: issuer!)
+        }
+        if issuedDate != nil {
+            copiedDict.removeValue(forKey: "issuanceDate")
+            jwt.notBeforeTime = issuedDate!
+        }
+        if subject != nil {
+            jwt.subject = subject!
+        }
+        if nonce != nil {
+            jwt.claims["nonce"] = nonce
+        }
+        jwt.claims["vc"] = copiedDict
+        
+        
+        return jwt
+    }
+
 }
