@@ -118,6 +118,7 @@ class Tests: XCTestCase {
             let jwt = JWT.init()
             jwt.expirationTime = expireDate
             jwt.notBeforeTime = currentDate
+            jwt.audience = ["test"]
             
             // Sign vc
             let signedVP = try vp.sign(kid: "did:meta:43894835", nonce: "vp nonce", signer: signer, baseClaims: jwt)

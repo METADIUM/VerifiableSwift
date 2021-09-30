@@ -44,7 +44,7 @@ public class Verifiable {
         jsonObject = [:]
         
         // Add base context
-        let context = ["http://w3id.org/credentials/v1"]
+        let context = ["https://www.w3.org/2018/credentials/v1"]
         jsonObject["@context"] = context
         
         // Set type
