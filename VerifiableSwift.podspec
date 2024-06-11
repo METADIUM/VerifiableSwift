@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'VerifiableSwift'
-  s.version          = '0.2.1'
+  s.version          = '0.2.2'
   s.summary          = 'Verifiable Credential and Presentation of Metadium.'
 
 # This description is used to generate tags and improve search results.
@@ -24,13 +24,13 @@ Verifiable Credential and Presentation of Metadium.
   s.homepage         = 'https://github.com/METADIUM/VerifiableSwift'
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { 'YoungBae Jeon' => 'ybjeon@coinplug.com' }
+  s.author           = { 'YoungBae Jeon' => 'ybjeon@cplabs.io' }
   s.source           = { :git => 'https://github.com/METADIUM/VerifiableSwift.git', :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.ios.deployment_target = '11.0'
+  s.ios.deployment_target = '12.0'
 
-  s.source_files = 'VerifiableSwift/Classes/**/*'
+  s.source_files = 'Sources/VerifiableSwift/Classes/**/*'
   
   # s.resource_bundles = {
   #   'VerifiableSwift' => ['VerifiableSwift/Assets/*.png']
